@@ -1,169 +1,128 @@
-# Security-Operations-Center-Lab-Wazuh-SIEM-and-XDR-integrated-with-Local-LLM-Ollama
-Wazuh SIEM/XDR Home Lab: Ubuntu Manager &amp; Windows Agent . Implements File Integrity Monitoring (FIM) for real-time detection . Integrated Ollama (Llama 3.1:8b) as a local AI assistant for security log analysis and incident response. Demonstrates endpoint monitoring and AI-driven SOC analysis
+# SOC Lab - Wazuh SIEM and XDR Integrated with Local LLM
 
+A home lab Security Operations Center built with Wazuh SIEM/XDR and a locally running LLM (Ollama + Llama 3.1 8B) for AI-assisted security log analysis and incident response.
 
+## Table of Contents
 
-SOCAI is a local AI-powered SOC (Security Operations Center) assistant that integrates:
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Features](#features)
+- [Tools and Technologies](#tools-and-technologies)
+- [Setup Guide](#setup-guide)
+- [Sample Output](#sample-output)
+- [Challenges and Solutions](#challenges-and-solutions)
+- [Skills Demonstrated](#skills-demonstrated)
 
-Wazuh SIEM (log collection + alerting)
-Windows endpoint agent monitoring
-Ollama local LLM (Llama 3.1 8B)
-Python automation engine
-Cross-machine API communication (Ubuntu ↔ Windows)
+## Overview
 
-The system converts raw security alerts into human-readable SOC analyst insights, including:
+SOCAI is a local AI-powered SOC (Security Operations Center) assistant that integrates Wazuh SIEM for log collection and alerting, a Windows endpoint Wazuh agent for monitoring, Ollama running Llama 3.1 8B as a fully local LLM, a Python automation engine, and cross-machine API communication between Ubuntu and Windows over LAN.
 
-Severity classification
-Attack interpretation
-MITRE ATT&CK mapping
-Recommended remediation steps
+The system converts raw Wazuh security alerts into structured SOC analyst insights covering severity classification, attack interpretation, MITRE ATT&CK mapping, and recommended remediation steps.
 
+## Architecture
 
---> Architecture
-                   ```mermaid
+```mermaid
 flowchart TD
-
     A["Windows Host
-    • Ollama LLM Server
-    • Model: llama3.1:8b
-    • Port: 11434"]
+    Ollama LLM Server
+    Model: llama3.1:8b
+    Port: 11434"]
 
     B["Ubuntu 22.04 VM (VirtualBox)
-    • Wazuh Manager
-    • Wazuh Dashboard
-    • Wazuh API
-    • Python SOC-AI Engine"]
+    Wazuh Manager
+    Wazuh Dashboard
+    Wazuh API
+    Python SOC-AI Engine"]
 
     C["Windows Endpoint
-    • Wazuh Agent"]
+    Wazuh Agent"]
 
-    A -->|HTTP API (LAN Access)| B
+    A -->|HTTP API over LAN| B
     C -->|Endpoint Events| B
 ```
-                     
---> Tools & Technologies Used
 
+## Features
 
-> Security Stack
-Wazuh SIEM (4.x)
-Windows Event Logging
-File Integrity Monitoring (FIM)
-Syscollector & Rootcheck
+**Real-time Security Monitoring**
+- File integrity detection via Wazuh FIM
+- Windows event log analysis
+- Agent-based telemetry from endpoint
 
+**AI SOC Analyst**
+- Converts raw Wazuh alerts into plain-language explanations
+- Maps detected activity to MITRE ATT&CK techniques
+- Provides step-by-step remediation guidance
 
-> AI Stack
-Ollama
-Llama 3.1 8B (Q4_K_M quantized model)
-REST API inference
+**Distributed AI Architecture**
+- Windows host runs LLM inference via Ollama
+- Ubuntu VM runs SIEM and Python orchestration
+- Communication via REST API over bridged LAN
 
+## Tools and Technologies
 
-> Infrastructure
-Oracle VirtualBox
-Ubuntu Server 22.04
-Windows 10 Host Machine
-Bridged Adapter
+**Security Stack**
+| Tool | Purpose |
+|------|---------|
+| Wazuh SIEM 4.x | Log collection, alerting, dashboards |
+| File Integrity Monitoring (FIM) | Real-time file change detection |
+| Syscollector and Rootcheck | System inventory and rootkit detection |
+| Windows Event Logging | Endpoint event source |
 
+**AI Stack**
+| Tool | Purpose |
+|------|---------|
+| Ollama | Local LLM runtime |
+| Llama 3.1 8B (Q4_K_M) | Quantized model for security analysis |
+| REST API | Inference communication between machines |
 
-> Development
-Python 3
-Requests library
-Bash scripting
-PowerShell (Windows configuration)
+**Infrastructure**
+| Component | Details |
+|-----------|---------|
+| Hypervisor | Oracle VirtualBox |
+| VM OS | Ubuntu Server 22.04 |
+| Host OS | Windows 10 |
+| Networking | Bridged Adapter |
 
+**Development**
+- Python 3
+- Requests library
+- Bash scripting
+- PowerShell (Windows configuration)
 
-> Features
-✔ Real-time Security Monitoring
-File integrity detection
-Windows event log analysis
-Agent-based telemetry
-✔ AI SOC Analyst
-Converts raw alerts into explanations
-Maps attacks to MITRE ATT&CK
-Provides remediation steps
-✔ Distributed AI Architecture
-Windows runs LLM inference
-Ubuntu runs SIEM + orchestration
-API-based communication
+## Setup Guide
 
+See **[SETUP.md](SETUP.md)** for the full step-by-step walkthrough.
 
+High-level steps:
+1. Set up Ubuntu VM in VirtualBox with a bridged network adapter
+2. Install Wazuh Manager and Dashboard on Ubuntu
+3. Install Wazuh Agent on the Windows host
+4. Install Ollama on Windows and expose it over LAN
+5. Configure FIM in the Wazuh ossec.conf file
+6. Run the Python SOC-AI engine from Ubuntu
 
-> Windows Setup Script (PowerShell)
-# Allow Ollama access from network
-New-NetFirewallRule -DisplayName "SOCAI Ollama Access" `
--Direction Inbound `
--Protocol TCP `
--LocalPort 11434 `
--Action Allow
+## Sample Output
 
+See **[sample-output.md](sample-output.md)** for a real example of the LLM analyzing a Wazuh brute-force alert, including severity rating, MITRE ATT&CK mapping, and recommended actions.
 
-> Ubuntu Setup Script (Wazuh Agent)
-# Install dependencies
-sudo apt update
+## Challenges and Solutions
 
-# Install Python dependencies
-sudo apt install python3-pip -y
-pip install requests
+| Issue | Cause | Solution |
+|-------|-------|---------|
+| Ollama only reachable on localhost | Default binding to 127.0.0.1 | Set `OLLAMA_HOST=0.0.0.0:11434` |
+| Firewall blocking VM access to Ollama | No inbound rule for port 11434 | Created inbound firewall rule via PowerShell |
+| Ollama reverting to localhost on restart | Auto-start launcher overriding env var | Killed background launcher, disabled auto-start, enforced manual control |
+| VirtualBox IP confusion | Misidentified IP ranges | Confirmed Windows at 192.168.0.10, Ubuntu at 192.168.0.11 |
+| pip install blocked on Ubuntu | PEP 668 externally managed environment | Used a Python virtual environment |
 
-# Check Wazuh agent status
-sudo systemctl status wazuh-agent
+## Skills Demonstrated
 
+- SIEM architecture design
+- Endpoint security monitoring
+- LLM integration for cybersecurity
+- REST API engineering
+- Cross-platform networking
+- Incident analysis automation
+- SOC workflow simulation
 
-> API Testing Commands
-Windows → Check Ollama
-curl http://127.0.0.1:11434/api/tags
-Ubuntu → Check LAN access
-curl http://192.168.0.10:11434/api/tags
-
-
-
-> Challenges Faced & Solutions
-❌ Issue 1: Ollama only accessible via localhost
-
-Problem: API not reachable from Ubuntu VM
-Cause: Default binding to 127.0.0.1
-Solution: Forced binding using:
-
-OLLAMA_HOST=0.0.0.0:11434
-❌ Issue 2: Firewall blocking VM access
-
-Problem: Connection refused from Ubuntu
-Solution:
-
-Created inbound firewall rule for port 11434
-❌ Issue 3: Ollama auto-restarting in localhost mode
-
-Problem: Process kept reverting to 127.0.0.1
-Solution:
-
-Killed background launcher
-Disabled auto-start behavior
-Manual server control enforced
-❌ Issue 4: VirtualBox networking confusion
-
-Problem: Misunderstanding IP ranges
-Solution:
-
-Identified correct IP mapping:
-Windows: 192.168.0.10
-Ubuntu: 192.168.0.11
-❌ Issue 5: Python dependency restriction (PEP 668)
-
-Problem: pip install blocked
-Solution:
-
-Used system packages or virtual environment
-
-
-This project demonstrates:
-
- #SIEM architecture design
- #Endpoint security monitoring
- #LLM integration for cybersecurity
- #REST API engineering
- #Cross-platform networking
- #Incident analysis automation
- #SOC workflow simulation
-
- Final Statement
-
-This project demonstrates a fully functional AI-assisted Security Operations Center prototype, combining real-world SIEM tools with local LLM inference to simulate intelligent cybersecurity analysis.
+This project demonstrates a fully functional AI-assisted Security Operations Center prototype, combining real-world SIEM tooling with local LLM inference to simulate intelligent cybersecurity analysis without relying on any external cloud services.
